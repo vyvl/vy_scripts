@@ -4,15 +4,20 @@ sections_def = {
 	[2] = "sales",
 
 	[3] = "lost",
+	
+	[4] = "travel",
 
-	[4] = "others",
+	[5] = "others",
 }
 -- serpent = dofile("serpent.lua")
 --require("serpent")
+
 notices_path = Core.GetPtokaXPath().."scripts/".."notices.tbl"
--- lost_path = Core.GetPtokaXPath().."scripts/".."lost.tbl"
--- sales_path = Core.GetPtokaXPath().."scripts/".."sales.tbl"
--- others_path = Core.GetPtokaXPath().."scripts/".."others.tbl"
+lost_path = Core.GetPtokaXPath().."scripts/".."lost.tbl"
+sales_path = Core.GetPtokaXPath().."scripts/".."sales.tbl"
+travel_path = Core.GetPtokaXPath().."scripts/".."sales.tbl"
+others_path = Core.GetPtokaXPath().."scripts/".."others.tbl"
+
 
 OnStartup = function()
 	--dofile(notices_path) 
