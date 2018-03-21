@@ -1,7 +1,9 @@
 verify_path = Core.GetPtokaXPath().."scripts/".."verify.tbl"
 require("socket")
 http = require("socket.http")
+JSON = require("JSON") --put JSON.lua inside "scripts/libs" folder. URL : https://github.com/jiyinyiyong/json-lua/blob/master/JSON.lua
 http.TIMEOUT = 1
+OWNER = "V10let" --change this nick to someone who maintains this script
 
 queue = {}
 OnStartup = function()
@@ -44,8 +46,8 @@ Fetches = function()
 
 
 for p,v in pairs(queue) do
-	if v["times"] == 15 then
-		Core.SendToNick(v["nick"],"<[DeZire-BOT]> ".. "Series Not Found. If you think this is a mistake PM V10let\n")
+	if v["times"] == 4 then
+		Core.SendToNick(v["nick"],"<[DeZire-BOT]> ".. "Series Not Found. If you think this is a mistake PM "..OWNER.."\n")
 		table.remove(queue,p)
 	end
 	v["times"] = v["times"] + 1
@@ -61,50 +63,49 @@ end
 end
 
 Fetch = function(arg,type)
-	arg = Verify(arg)
-	arg = string.gsub(arg," ","+")
-	url = "http://services.tvrage.com/tools/quickinfo.php?show="..arg
-	--Core.SendToAll(url)
-	response,err = http.request(url)
-	y = {}
-	if response == nil then
-		return "Series not found"
-	end
+--    arg = Verify(arg)
+    arg = string.gsub(arg," ","+")
+    local url = "http://api.tvmaze.com/singlesearch/shows?q=".. arg .."&embed[]=nextepisode&embed[]=previousepisode"
+    local response, err = http.request(url)
 
-	for i,v in response:gmatch"(.-)@(.-)\n" do
-		y[i] = v
-	end
-	if y['Status'] == nil then
-		return "Series not found"
-	end
-	if type == "next" then
-		if y['Status'] == "Ended" then
-			local e,s,ses,ep,name,mon,day,year = string.find(y['Latest Episode'],"(%d+)x(%d+)^(.+)^(.-)/(%d+)/(%d+)")
-			local date = day.."-"..mon.."-"..year
-			local episode = "[S"..ses.."E"..ep.."] "
-			local ret = "<[DeZire-BOT]> "..y['Show Name'].." - Last episode: "..episode..name.." - "..date
-			return ret
-		end
-		if y['Next Episode'] == nil then
-			local ret = "<[DeZire-BOT]> "..y['Show Name'].." - "..y['Status']
-			return ret
-		end
-		local e,s,ses,ep,name,mon,day,year = string.find(y['Next Episode'],"(%d+)x(%d+)^(.+)^(.-)/(%d+)/(%d+)")
-		local date = day.."-"..mon.."-"..year
-		local episode = "[S"..ses.."E"..ep.."] "
-		local ret = "<[DeZire-BOT]> "..y['Show Name'].." - "..episode..name.." - "..date
-		return ret
-	elseif type =="last" then
-		if y['Status'] == "New Series" then			
-			local ret = "<[DeZire-BOT]> "..y['Show Name'].." - Last: New Series"
-			return ret
-		end
-		local e,s,ses,ep,name,mon,day,year = string.find(y['Latest Episode'],"(%d+)x(%d+)^(.+)^(.-)/(%d+)/(%d+)")
-		local date = day.."-"..mon.."-"..year
-		local episode = "[S"..ses.."E"..ep.."] "
-		local ret = "<[DeZire-BOT]> "..y['Show Name'].." - "..episode..name.." - "..date
-		return ret
-	end
+    local y = {}
+    if response == nil or response == "" then
+        return "Series not found"
+    end
+
+    y = JSON:decode(response)
+
+    if y['status'] == nil then
+        return "Series not found"
+    end
+    if type == "next" then
+        if y['status'] == "Ended" then
+        local prevEp = y['_embedded']['previousepisode']
+            local date = prevEp['airdate']
+            local episode = "[S"..prevEp['season'] .."E"..prevEp['number'].."] "
+            local ret = "<[DeZire-BOT]> "..y['name'].." - Last episode: "..episode..prevEp['name'].." - "..date
+            return ret
+        end
+        local nextEp = y['_embedded']['nextepisode']
+        if nextEp == nil then
+            local ret = "<[DeZire-BOT]> "..y['Show Name'].." - "..y['Status']
+            return ret
+        end
+        local date = nextEp['airdate']
+        local episode = "[S"..nextEp['season'] .."E"..nextEp['number'].."] "
+        local ret = "<[DeZire-BOT]> "..y['name'].." - "..episode..nextEp['name'].." - "..date
+        return ret
+    elseif type =="last" then
+        if y['status'] == 	"In Development" then
+            local ret = "<[DeZire-BOT]> "..y['name'].." - Last: New Series"
+            return ret
+        end
+        local prevEp = y['_embedded']['previousepisode']
+        local date = prevEp['airdate']
+        local episode = "[S"..prevEp['season'] .."E"..prevEp['number'].."] "
+        local ret = "<[DeZire-BOT]> "..y['name'].." - Last episode: "..episode..prevEp['name'].." - "..date
+        return ret
+    end
 end
 
 Verify = function(arg)
