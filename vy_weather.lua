@@ -1,5 +1,6 @@
 require("socket")
 http = require("socket.http")
+JSON = require("JSON")
 y = {}
 u = {}
 http.TIMEOUT = 5
@@ -26,25 +27,25 @@ Fetchtemp  = function()
 	return tmp
 end
 
-Fetch  = function()
-	response,err = http.request("http://api.openweathermap.org/data/2.5/weather?id=1259693&mode=json")
-	response2,err = http.request("http://api.wunderground.com/api/84672e913672549f/conditions/q/pilani.xml")
-	if not (response and response2) then
-	if vel == "" and retry then
-		retry = false
-		Core.SendToAll("Retry")
-		Fetch()
-	end	
-		return true
-	end
-	local e,s,temp2 = string.find(response2,"<temp_c>(.*)</temp_c>")
-	if response ~=nil then
-		for  i ,v in response:gmatch'"(%a+)":(%d+[^},]?%d*)' do
-			u[i] = v
-		end	
-	end
-	tempp = u['temp'] - 273.15	
+Fetch = function()
+    local response, err = http.request("https://openweathermap.org/data/2.5/weather?appid=b6907d289e10d714a6e88b30761fae22&q=pilani")
+    local response2, err = http.request("http://api.wunderground.com/api/84672e913672549f/conditions/q/pilani.json")
+    local openWeather = JSON:decode(response)
+    local wunderGroundWeather = JSON:decode(response2)['current_observation']
 
-	vel = "\nPlace : Pilani\nTemperature (Openweathermap) = "..tempp.."°C\nTemperature (WUnderground) = "..temp2.."°C\nPressure = "..u['pressure'].." hPa\nSunrise = "..os.date("%H:%M:%S",tonumber(u['sunrise'])).."\nSunset = "..os.date("%H:%M:%S",tonumber(u['sunset']))
-	retry = true
+    if not (openWeather and wunderGroundWeather) then
+        if vel == "" and retry then
+            retry = false
+            Fetch()
+        end
+        return true
+    end
+    local openTemp = openWeather['main']['temp']
+    local wunderTemp = wunderGroundWeather['temp_c']
+
+    vel = "\nPlace : Pilani\nTemperature (Openweathermap) = " .. openTemp ..
+            "°C\nTemperature (WUnderground) = " .. wunderTemp ..
+            "°C\nPressure = " .. openWeather['main']['pressure'] .. " hPa\nSunrise = " .. os.date("%H:%M:%S", tonumber(openWeather['sys']['sunrise'])) ..
+            "\nSunset = " .. os.date("%H:%M:%S", tonumber(openWeather['sys']['sunset']))
+    retry = true
 end
