@@ -43,7 +43,10 @@ ChatArrival = function(user,data)
 		end
 
 		if(notices[arg1]) then
-			table.insert(notices[arg1],arg2)
+			local entry = {}
+			entry['message'] = arg2
+			entry['time'] = os.date("%d %b, %Y")
+			table.insert(notices[arg1],entry)
 			Core.SendToUser(user,"Notice added successfully" )
 		else 
 			Core.SendToUser(user,"The section "..arg1.. " is not found" )	

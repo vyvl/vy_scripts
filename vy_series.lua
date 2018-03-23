@@ -88,7 +88,7 @@ Fetch = function(arg,type)
         end
         local nextEp = y['_embedded']['nextepisode']
         if nextEp == nil then
-            local ret = "<[DeZire-BOT]> "..y['Show Name'].." - "..y['Status']
+            local ret = "<[DeZire-BOT]> "..y['name'].." - "..y['status']
             return ret
         end
         local date = nextEp['airdate']
